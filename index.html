@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Baby Games V4 - Jingle Bells</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:system-ui}
+body{background:#FFF3D6;text-align:center;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+h1{font-size:21px;padding:8px;color:#FF6B9D}
+#tabs{display:flex;gap:6px;padding:0 8px 8px;overflow-x:auto}
+.tab{flex:1;min-width:72px;padding:12px 6px;border:none;border-radius:16px;background:#fff;font-size:14px;font-weight:800}
+.tab.active{background:#FF6B9D;color:#fff}
+#voiceBtn{background:#fff;border:2px solid #FF6B9D;color:#FF6B9D;padding:8px 14px;border-radius:20px;font-weight:800;margin:0 auto 4px}
+#calmBtn{background:#FF9800;color:#fff;border:none;padding:10px 18px;border-radius:20px;font-weight:900;font-size:16px;margin:0 auto 6px;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+#score{font-size:15px;color:#888;margin-bottom:6px}
+#stage{flex:1;margin:0 10px 10px;background:#fff;border-radius:28px;overflow-y:auto;padding:14px 10px}
+.big{font-size:115px;line-height:1}
+.word{font-size:30px;font-weight:900;color:#333}
+.sub{font-size:18px;color:#888}
+.msg{font-size:23px;font-weight:900;color:#FF6B9D;min-height:32px;margin-top:8px}
+#buttons{display:flex;gap:8px;padding:0 10px 14px}
+.btn{flex:1;padding:16px 6px;border:none;border-radius:18px;font-size:16px;font-weight:800;color:#fff}
+.green{background:#4CAF50}.orange{background:#FF9800}.purple{background:#9C27B0}
+.colorBtn{width:48%;display:inline-block;height:86px;border-radius:20px;border:4px solid #fff;font-size:30px;color:#fff;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.3);margin:1%;vertical-align:top}
+.peekBox{width:210px;height:210px;background:#FFD54F;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:95px;border:6px dashed #FF9800;margin:10px auto}
+.balloon{width:30%;display:inline-block;font-size:62px;margin:8px 1%}
+.numBtn{width:70px;height:70px;border-radius:50%;border:none;font-size:34px;font-weight:900;color:#fff;margin:4px}
+.dance{animation:dance 0.6s infinite alternate}
+@keyframes dance{from{transform:rotate(-10deg) scale(1)}to{transform:rotate(10deg) scale(1.2)}}
+</style>
+</head>
+<body>
+<h1>👶 Baby Games 🎉 Talking!</h1>
+<div id="tabs">
+<button class="tab active" id="tab-animals" onclick="showTab('animals')">🐶 Animals</button>
+<button class="tab" id="tab-colors" onclick="showTab('colors')">🎨 Colors</button>
+<button class="tab" id="tab-peek" onclick="showTab('peek')">👀 Peekaboo</button>
+<button class="tab" id="tab-balloons" onclick="showTab('balloons')">🎈 Balloons</button>
+<button class="tab" id="tab-numbers" onclick="showTab('numbers')">1️⃣ 1-10</button>
+</div>
+<button id="voiceBtn" onclick="enableVoice()">🔊 Tap Here First To Turn On Voice</button>
+<button id="calmBtn" onclick="calmBaby()">🍼 Baby Crying? Tap Here - Jingle Bells + Dancing Animals</button>
+<div id="score">⭐ Stars: <span id="starCount">0</span> • Tap! Tap! Tap!</div>
+<div id="stage"></div>
+<div id="buttons">
+<button class="btn green" onclick="actionSound()">🔊 Sound</button>
+<button class="btn orange" onclick="actionNext()">➡️ Next</button>
+<button class="btn purple" onclick="playJingleBells()">🎵 Jingle Bells</button>
+</div>
+<script>
+var stars=0, currentTab='animals', aIdx=0, pIdx=0, voiceOn=false, audioCtx=null, femaleVoice=null, jinglePlaying=false;
+var animals=[
+["🐶","Doggy","Woof Woof","Doggy! Woof Woof! Woof Woof!","#FFE0B2"],
+["🐱","Kitty","Meow Meow","Kitty! Meow Meow! Meow Meow!","#F8BBD0"],
+["🦁","Lion","Roooar","Lion! Roooar! Roooar!","#FFECB3"],
+["🐘","Elephant","Paaaah","Elephant! Paaaah! Paaaah!","#BBDEFB"],
+["🐵","Monkey","Ooh Ooh Ah Ah","Monkey! Ooh Ooh! Ah Ah!","#C8E6C9"],
+["🐰","Bunny","Hop Hop Hop","Bunny! Hop Hop Hop!","#E1BEE7"],
+["🦋","Butterfly","Flutter Flutter","Butterfly! Flutter! Flutter!","#B2EBF2"],
+["🐢","Turtle","Slow Slow","Turtle! Slow! Slow!","#DCEDC8"],
+["🐥","Chick","Chirp Chirp","Chick! Chirp Chirp! Chirp Chirp!","#FFF9C4"],
+["🐸","Froggy","Ribbit Ribbit","Froggy! Ribbit! Ribbit!","#A5D6A7"],
+["🐮","Cow","Moo Moo","Cow! Moo Moo! Moo Moo!","#FFCCBC"],
+["🐷","Piggy","Oink Oink","Piggy! Oink Oink! Oink Oink!","#F8BBD0"],
+["🐔","Chicken","Cluck Cluck","Chicken! Cluck Cluck! Cluck Cluck!","#FFE0B2"],
+["🦆","Duck","Quack Quack","Duck! Quack Quack! Quack Quack!","#FFF59D"],
+["🐝","Bee","Bzzz Bzzz","Bee! Bzzz! Bzzz!","#FFECB3"],
+["🦊","Fox","Yip Yip","Fox! Yip Yip! Yip Yip!","#FFCC80"],
+["🐻","Bear","Grrr Grrr","Bear! Grrr! Grrr!","#D7CCC8"],
+["🦒","Giraffe","Humm Humm","Giraffe! Humm! Humm!","#FFF9C4"],
+["🐳","Whale","Whoooosh","Whale! Whoooosh! Whoooosh!","#B3E5FC"],
+["🦄","Unicorn","Neigh Neigh","Unicorn! Neigh! Neigh!","#E1BEE7"]
+];
+var colors=[
+["Red","🔴","#FF5252"],["Blue","🔵","#448AFF"],["Yellow","🟡","#FFD740"],["Green","🟢","#69F0AE"],["Pink","🩷","#FF80BF"],["Purple","🟣","#B388FF"],["Orange","🟠","#FFAB40"],["Black","⚫","#333333"],["White","⚪","#EEEEEE"],["Brown","🟤","#8D6E63"],["Grey","⬜","#9E9E9E"],["Gold","⭐","#FFC107"]
+];
+var numWords=["Zero","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten"];
+var peekHidden=true;
+function pickFemaleVoice(){ var voices=speechSynthesis.getVoices(); if(!voices.length) return null; var names=['Samantha','Google US English','Microsoft Zira','Karen','Moira','Tessa','Fiona','Veena','Aria','Jenny','Ava']; for(var i=0;i<names.length;i++){ var v=null; for(var j=0;j<voices.length;j++){ if(voices[j].name.indexOf(names[i])!==-1){ v=voices[j]; break; } } if(v) return v; } for(var k=0;k<voices.length;k++){ if(voices[k].lang.indexOf('en')===0) return voices[k]; } return voices[0]; }
+function enableVoice(){ voiceOn=true; try{speechSynthesis.cancel();}catch(e){} femaleVoice=pickFemaleVoice(); document.getElementById('voiceBtn').textContent='✅ Voice ON'; document.getElementById('voiceBtn').style.background='#E8F5E9'; speak('Hello baby! Let us play!'); try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+speechSynthesis.onvoiceschanged=function(){ femaleVoice=pickFemaleVoice(); };
+function speak(text){ if(!voiceOn) return; try{ speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(text); if(femaleVoice) u.voice=femaleVoice; u.lang='en-US'; u.rate=0.85; u.pitch=1.25; u.volume=1; speechSynthesis.speak(u); }catch(e){} }
+function getAudio(){ if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+function popSound(){ try{ var ctx=getAudio(); if(!ctx) return; var len=ctx.sampleRate*0.15; var buffer=ctx.createBuffer(1,len,ctx.sampleRate); var data=buffer.getChannelData(0); for(var i=0;i<len;i++){ data[i]=(Math.random()*2-1)*(1-i/len); } var src=ctx.createBufferSource(); src.buffer=buffer; var g=ctx.createGain(); g.gain.value=0.7; src.connect(g); g.connect(ctx.destination); src.start(); }catch(e){} }
+function playNote(freq,start,dur){ try{ var ctx=getAudio(); if(!ctx) return; var o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=freq; o.type='triangle'; g.gain.setValueAtTime(0.0001,ctx.currentTime+start); g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+start+0.05); g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+start+dur); o.start(ctx.currentTime+start); o.stop(ctx.currentTime+start+dur+0.05); }catch(e){} }
+// JINGLE BELLS - E E E, E E E, E G C D E, F F F F F E E E E D D E D G
+function playJingleBells(){
+  getAudio();
+  var notes=[
+    // Jingle bells, jingle bells
+    [659,0],[659,0.35],[659,0.7],[659,1.05],[659,1.4],[659,1.75],
+    // Jingle all the way
+    [659,2.1],[784,2.45],[523,2.8],[587,3.15],[659,3.5],
+    // Oh what fun
+    [698,4.2],[698,4.55],[698,4.9],[698,5.25],[698,5.6],[659,5.95],[659,6.3],[659,6.65],
+    // One horse open sleigh
+    [659,7.0],[587,7.35],[587,7.7],[659,8.05],[587,8.4],[784,8.75]
+  ];
+  for(var i=0;i<notes.length;i++){ playNote(notes[i][0], notes[i][1], 0.32); }
+  speak('Jingle Bells! Jingle Bells! Jingle all the way!');
+  document.getElementById('score').innerHTML='🎵 Jingle Bells Playing! 🎄 • ⭐ Stars: <span id="starCount">'+stars+'</span>';
+  setTimeout(function(){ document.getElementById('score').innerHTML='⭐ Stars: <span id="starCount">'+stars+'</span> • Tap! Tap! Tap!'; },4000);
+}
+function calmBaby(){
+  // For crying baby - instant happy: Jingle Bells + dancing animals + voice
+  playJingleBells();
+  speak('Shhh! Shhh! It is okay baby! Look! Dancing animals! Peekaboo!');
+  var stage=document.getElementById('stage');
+  stage.style.background='#FFF9C4';
+  stage.innerHTML='<div class="word">🍼 Shhh! It is Okay!</div><div class="sub">Look baby! Dancing!</div><div style="font-size:100px;margin:10px"><span class="dance" style="display:inline-block">🐶</span> <span class="dance" style="display:inline-block">🐱</span> <span class="dance" style="display:inline-block">🦁</span></div><div style="font-size:100px"><span class="dance" style="display:inline-block">🐰</span> <span class="dance" style="display:inline-block">🐘</span> <span class="dance" style="display:inline-block">🐵</span></div><div class="msg">🎵 Jingle Bells! Jingle Bells! 🎄</div><div style="font-size:40px">🎈 🎈 🎈</div>';
+  setTimeout(function(){ showTab('animals'); },6000);
+}
+function addStar(){ stars++; var el=document.getElementById('starCount'); if(el) el.textContent=stars; }
+function showTab(tab){
+  currentTab=tab;
+  var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.remove('active');
+  var active=document.getElementById('tab-'+tab); if(active) active.classList.add('active');
+  render();
+}
+function render(){
+  var stage=document.getElementById('stage');
+  if(currentTab==='animals'){
+    var a=animals[aIdx];
+    stage.style.background=a[4];
+    stage.innerHTML='<div class="word">Tap The Animal!</div><div class="sub">Tap the animal!</div><div class="big" onclick="tapAnimal()">'+a[0]+'</div><div class="word">'+a[1]+'!</div><div class="msg" id="msg"></div>';
+  }
+  if(currentTab==='colors'){
+    stage.style.background='#fff';
+    var html='<div class="word">🎨 Tap a Color!</div><div class="sub">What color is this?</div><div class="msg" id="msg">Tap any color!</div><div>';
+    for(var i=0;i<colors.length;i++){ html+='<button class="colorBtn" style="background:'+colors[i][2]+'" onclick="tapColor('+i+')">'+colors[i][1]+'<br><span style="font-size:15px">'+colors[i][0]+'</span></button>'; }
+    html+='</div>';
+    stage.innerHTML=html;
+  }
+  if(currentTab==='peek'){
+    stage.style.background='#FFF9C4'; peekHidden=true;
+    stage.innerHTML='<div class="word">👀 Peekaboo!</div><div class="sub">Tap the box - Who is hiding?</div><div class="peekBox" id="peekBox" onclick="tapPeek()">❓</div><div class="msg" id="msg">Tap! Tap! Where is it?</div>';
+  }
+  if(currentTab==='balloons'){
+    stage.style.background='#E3F2FD';
+    var bhtml='<div class="word">🎈 Pop The Balloons!</div><div class="sub">Tap a balloon to POP it!</div><div class="msg" id="msg">Pop! Pop! Pop!</div><div>';
+    for(var b=0;b<6;b++){ bhtml+='<div class="balloon" onclick="tapBalloon(this)"><span>🎈</span></div>'; }
+    bhtml+='</div>';
+    stage.innerHTML=bhtml;
+  }
+  if(currentTab==='numbers'){
+    stage.style.background='#FFF3E0';
+    var nhtml='<div class="word">1️⃣ Count With Me! 1 to 10</div><div class="sub">Tap 1, 2, 3... up to 10!</div><div>';
+    var cols=["#FF5252","#448AFF","#4CAF50","#FF9800","#9C27B0","#00BCD4","#E91E63","#8BC34A","#FFC107","#795548"];
+    for(var n=1;n<=10;n++){ nhtml+='<button class="numBtn" style="background:'+cols[n-1]+'" onclick="tapNumber('+n+')">'+n+'</button>'; }
+    nhtml+='</div><div class="apples" id="apples" style="font-size:36px;min-height:48px">🍎</div><div class="msg" id="msg">Tap 1!</div>';
+    stage.innerHTML=nhtml;
+  }
+}
+function tapAnimal(){ addStar(); var a=animals[aIdx]; var msg=document.getElementById('msg'); if(msg) msg.textContent='🎉 '+a[2]+'! 🎉'; speak(a[3]); if(stars%4===0) setTimeout(function(){ aIdx=(aIdx+1)%animals.length; render(); },1200); }
+function tapColor(i){ addStar(); var c=colors[i]; var msg=document.getElementById('msg'); if(msg) msg.textContent='🎉 '+c[0]+'! '+c[0]+'!'; document.getElementById('stage').style.background=c[2]+'22'; speak(c[0]+'! '+c[0]+'! This is '+c[0]+'!'); }
+function tapPeek(){ addStar(); var box=document.getElementById('peekBox'); var msg=document.getElementById('msg'); if(peekHidden){ peekHidden=false; var a=animals[pIdx]; box.textContent=a[0]; box.style.background='#fff'; if(msg) msg.textContent='🎉 Peekaboo! It is a '+a[1]+'!'; speak('Peekaboo! Peekaboo! It is a '+a[1]+'! '+a[2]+'!'); } else { peekHidden=true; pIdx=(pIdx+1)%animals.length; box.textContent='❓'; box.style.background='#FFD54F'; if(msg) msg.textContent='Hiding again... Tap!'; speak('Where did it go? Peekaboo again!'); } }
+function tapBalloon(el){ addStar(); popSound(); el.innerHTML='<span style="font-size:52px">💥</span>'; var msg=document.getElementById('msg'); if(msg) msg.textContent='🎉 POP! Great job!'; speak('Pop! Pop! Great job! Pop!'); setTimeout(function(){ el.innerHTML='<span>🎈</span>'; },700); }
+function tapNumber(n){ addStar(); var apples=''; for(var i=0;i<n;i++) apples+='🍎 '; var ap=document.getElementById('apples'); if(ap) ap.textContent=apples; var countList=''; for(var j=1;j<=n;j++){ countList+=numWords[j]; if(j<n) countList+=', '; } var msg=document.getElementById('msg'); if(msg) msg.textContent='🎉 '+numWords[n]+'! '+n+' Apples!'; speak(numWords[n]+'! '+countList+'! '+n+' Apples! Great job!'); }
+function actionSound(){ if(currentTab==='animals') speak(animals[aIdx][3]); if(currentTab==='colors') speak('Tap a color! Red! Blue! Yellow!'); if(currentTab==='peek') tapPeek(); if(currentTab==='balloons'){ popSound(); speak('Pop! Pop!'); } if(currentTab==='numbers') speak('One, Two, Three, Four, Five! Count with me!'); }
+function actionNext(){ if(currentTab==='animals'){ aIdx=(aIdx+1)%animals.length; speak('Next! '+animals[aIdx][1]+'!'); render(); } else { render(); } }
+render();
+</script>
+</body>
+</html>
